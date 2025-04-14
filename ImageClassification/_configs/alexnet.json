@@ -1,0 +1,21 @@
+{
+    "model": "AlexNet",
+    "launch_type": "train",
+    "dataset": "cifar10",
+
+    "optimizer": "sgd",
+    "optimizer_kwargs": { 
+        "lr": 1e-3,
+        "momentum": 0.9,
+        "weight_decay": 5e-4
+    },
+    "loss_function": "cross_entropy",
+    "batch_size": 32,
+    "val_batch_size": 4,
+    "transforms": [
+        {"type": "Resize", "p": 1, "height": 256, "width": 256, "interpolation": "INTER_LINEAR"},
+        {"type": "HorizontalFlip", "p": 0.5},
+        {"type": "RandomCrop", "height": 224, "width": 224, "p": 1},
+        {"type": "Normalize", "mean": [0.4914, 0.4822, 0.4465], "std": [0.2470, 0.2435, 0.2616], "p": 1}
+    ]
+}
