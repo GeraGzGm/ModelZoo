@@ -6,19 +6,17 @@ from torch import nn
 from tqdm import tqdm
 from torch.utils.data import DataLoader, Dataset
 
-from utils import HyperParameters, Metrics
+from utils import Parameters, Metrics
 
 
 class TrainModel:
-    def __init__(self, model: nn.Module, optimizer: torch.optim.Optimizer, loss_function: nn.Module, hyperparameters: HyperParameters, out_dir: str, device: str = "cuda"):
-        self.model = model
+    def __init__(self, config: Parameters, out_dir: str, device: str = "cuda"):
+        self.model = config.model
         self.device = device
-        self.optimizer = optimizer
-        self.criterion = loss_function
+        self.optimizer = config.optimizer
+        self.criterion = config.loss_function
 
-        self.out_dir = out_dir
-        
-        self.hyperparams = hyperparameters
+        self.out_dir = out_dir        
         self._move_to_device()
 
     def _move_to_device(self) -> None:

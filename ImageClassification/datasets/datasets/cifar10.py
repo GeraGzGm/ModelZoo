@@ -1,9 +1,14 @@
+from typing import Optional
+
+import torch
 import albumentations as A
 from torchvision import datasets
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 
 from .utils import Interpolations
 from ..base_dataset import DatasetRegistry, BaseDataset, AlbumentationsWrapper
+
+torch.manual_seed(0)
 
 @DatasetRegistry.register("cifar10")
 class CIFAR10Dataset(BaseDataset):
@@ -19,13 +24,15 @@ class CIFAR10Dataset(BaseDataset):
     def input_size(cls):
         return (224, 224)  # Standard size for CNNs
 
-    def get_datasets(self, train_transforms: list[dict[str, str]], test_transforms: list[dict[str, str]]) -> tuple[DataLoader, DataLoader]:
+    def get_datasets(self, train_transforms: list[dict[str, str]], test_transforms: list[dict[str, str]], split_ratio: list[float]) -> tuple[DataLoader, Optional[DataLoader], DataLoader]:
         train_transforms = self.convert_transforms(train_transforms)
         test_transforms = self.convert_transforms(test_transforms)
 
-        train_dataset = AlbumentationsWrapper( datasets.CIFAR10(self.root, train=True, download=True), transform = train_transforms )
-        test_dataset = AlbumentationsWrapper( datasets.CIFAR10(self.root, train=False, download=True), transform = test_transforms )
-        return train_dataset, test_dataset
+        dataset = AlbumentationsWrapper( datasets.CIFAR10(self.root, train = True, download = True), transform = train_transforms )
+        train_dataset, val_dataset = self._split_train(dataset, split_ratio)
+
+        test_dataset = AlbumentationsWrapper( datasets.CIFAR10(self.root, train = False, download = True), transform = test_transforms )
+        return train_dataset, val_dataset, test_dataset
     
     def convert_transforms(self, transforms: list[dict[str, str]]) -> A.Compose:
         """
@@ -46,3 +53,6 @@ class CIFAR10Dataset(BaseDataset):
 
             augmentations.append( getattr(A, type_)(**transform) )
         return A.Compose(augmentations)
+
+    def _split_train(self, dataset: AlbumentationsWrapper, split_ratio: list[float]) -> tuple[AlbumentationsWrapper, AlbumentationsWrapper]:
+        return random_split(dataset, split_ratio)

@@ -21,6 +21,7 @@ class Parameters:
     datasets: tuple[DataLoader, DataLoader]
     model: nn.Module
     optimizer: torch.optim.Optimizer
+    loss_function: nn.Module
 
 @dataclass
 class Optimizers:
@@ -39,3 +40,19 @@ class Optimizers:
                 f"Unknown optimizer '{name}'. "
                 f"Available optimizers: {list(cls.__annotations__.keys())}"
             )
+
+@dataclass
+class LossFunctions:
+    cross_entropy = nn.CrossEntropyLoss
+
+    @classmethod
+    def get_criterion(cls, name: str) -> nn.Module:
+        """Get loss function class by name."""
+        try:
+            return getattr(cls, name)
+        except AttributeError:
+            raise ValueError(
+                f"Unknown Loss Function '{name}'. "
+                f"Available Loss Function: {list(cls.__annotations__.keys())}"
+            )
+

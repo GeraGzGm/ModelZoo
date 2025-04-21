@@ -21,7 +21,7 @@ if __name__ == "__main__":
     config = ModelConfigs(args.config_file).get_model_configs()
     out_dir = args.out_dir
 
-    print(config)
+    print(len(config.datasets[0]), len(config.datasets[1]), len(config.datasets[2]))
 
     match config.run_type.lower():
         case "train":
