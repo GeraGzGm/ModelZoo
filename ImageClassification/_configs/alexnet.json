@@ -2,6 +2,9 @@
     "model": "AlexNet",
     "launch_type": "train",
     "dataset": "cifar10",
+    "epochs": 30,
+    "batch_size": 32,
+    "val_batch_size": 4,
 
     "optimizer": "sgd",
     "optimizer_kwargs": { 
@@ -10,8 +13,6 @@
         "weight_decay": 5e-4
     },
     "loss_function": "cross_entropy",
-    "batch_size": 32,
-    "val_batch_size": 4,
     "transforms": [
         {"type": "Resize", "p": 1, "height": 256, "width": 256, "interpolation": "INTER_LINEAR"},
         {"type": "HorizontalFlip", "p": 0.5},

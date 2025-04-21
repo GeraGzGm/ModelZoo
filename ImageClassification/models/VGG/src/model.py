@@ -1,6 +1,9 @@
 import torch
 from torch import nn
 
+from ...base_models import ModelsRegistry
+
+@ModelsRegistry.register("VGG16")
 class VGG16(nn.Module):
     """
     - BatchNorm was not used in the original VGG paper, but it helps to get a faster convergence. So, will be using that.
@@ -34,6 +37,7 @@ class VGG16(nn.Module):
         x = torch.flatten(x, 1)
         return self.linear(x)
 
+@ModelsRegistry.register("VGG19")
 class VGG19(nn.Module):
     def __init__(self, n_classes: int):
         super().__init__()
