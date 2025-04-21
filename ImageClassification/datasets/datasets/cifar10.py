@@ -41,7 +41,7 @@ class CIFAR10Dataset(BaseDataset):
         for transform in transforms:
             type_ = transform.pop("type")
 
-            if interp := transform.get("interpolation"):
+            if interp := transform.get("interpolation", None):
                 transform["interpolation"] = Interpolations.to_cv2(interp)
 
             augmentations.append( getattr(A, type_)(**transform) )
