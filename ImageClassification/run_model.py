@@ -21,7 +21,14 @@ if __name__ == "__main__":
     config = ModelConfigs(args.config_file).get_model_configs()
     out_dir = args.out_dir
 
-    
+    match config.run_type.lower():
+        case "train":
+            pass
+        case "inference":
+            pass
+        case _:
+            raise ValueError("Wrong run type")
+
 
     
 

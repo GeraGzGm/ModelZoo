@@ -14,6 +14,7 @@ class Metrics:
 
 @dataclass
 class Parameters:
+    run_type: str
     epochs: int
     batch_size: int
     val_batch_size: int
@@ -27,6 +28,7 @@ class Optimizers:
     adam = Adam
     adamax = Adamax
     rmsprop = RMSprop
+
 
     @classmethod
     def get_optimizer(cls, name: str) -> torch.optim.Optimizer:

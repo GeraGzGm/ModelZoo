@@ -32,6 +32,7 @@ class ModelConfigs:
         optimizer = self._get_optimizer( self.config_file.get("optimizer"), model, self.config_file.get("optimizer_kwargs") ),
 
         return Parameters(
+            run_type = self.config_file.get("run_type"),
             epochs = self.config_file.get("epochs"),
             batch_size = self.config_file.get("batch_size"),
             val_batch_size = self.config_file.get("val_batch_size"),
