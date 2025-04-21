@@ -17,6 +17,11 @@ class BaseDataset(ABC):
         """Return (train_dataset, val_dataset)"""
         pass
 
+    @abstractmethod
+    def get_number_of_classes(self) -> int:
+        """Return the number of classes. This will work for the FC layers output."""
+        pass
+
 class DatasetRegistry:
     _registry = {}
     

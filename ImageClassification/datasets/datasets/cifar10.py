@@ -8,8 +8,13 @@ from ..base_dataset import DatasetRegistry, BaseDataset, AlbumentationsWrapper
 
 @DatasetRegistry.register("cifar10")
 class CIFAR10Dataset(BaseDataset):
+    N_CLASSES = 10
     def __init__(self, root: str = "./data"):
         self.root = root
+
+    @classmethod
+    def get_number_of_classes(cls) -> int:
+        return cls.N_CLASSES
     
     @classmethod
     def input_size(cls):
@@ -34,4 +39,3 @@ class CIFAR10Dataset(BaseDataset):
             augmentations.append( getattr(A, type_)(**transform) )
 
         return A.Compose(augmentations)
-            
