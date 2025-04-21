@@ -1,11 +1,8 @@
 import json
-from typing import Optional
-from dataclasses import dataclass
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from torch.optim import SGD, Adam, RMSprop, Adamax
 
 from utils import Parameters, Optimizers
 from models.base_models import ModelsRegistry
@@ -24,14 +21,15 @@ class ModelConfigs:
             assert e(f"Given path: {path} does not exist.")
         
     def get_model_configs(self) -> Parameters:
-        datasets = self._get_datasets(self.config_file.get("dataset"), self.config_file.get("transforms")),
+        datasets, n_classes = self._get_datasets(self.config_file.get("dataset"),
+                                                 self.config_file.get("train_transforms"),
+                                                 self.config_file.get("inference_transforms"))
 
-        # TODO: CHANGE THE 10 to the number of classes of the dataset
-
-        model = self._get_model(self.config_file.get("model"), 10 )
+        model = self._get_model(self.config_file.get("model"), n_classes)
         optimizer = self._get_optimizer( self.config_file.get("optimizer"), model, self.config_file.get("optimizer_kwargs") ),
 
         return Parameters(
+            run_type = self.config_file.get("run_type"),
             epochs = self.config_file.get("epochs"),
             batch_size = self.config_file.get("batch_size"),
             val_batch_size = self.config_file.get("val_batch_size"),
@@ -40,16 +38,12 @@ class ModelConfigs:
             optimizer = optimizer
         )
 
-    def _get_datasets(self, dataset_name: str, transforms: list) -> tuple[DataLoader, DataLoader]:
+    def _get_datasets(self, dataset_name: str, train_transforms: list, inference_transforms: list) -> tuple[tuple[DataLoader, DataLoader], int]:
         dataset = DatasetRegistry.get_dataset(dataset_name)()
-        return dataset.get_datasets(transforms)
+        return dataset.get_datasets(train_transforms, inference_transforms), dataset.get_number_of_classes()
     
     def _get_model(self, model_name: str, n_classes: int) -> nn.Module:
         return ModelsRegistry.get_model(model_name)(n_classes)
 
     def _get_optimizer(self, optimizer: str, model: nn.Module, kwargs: dict) -> torch.optim.Optimizer:
         return Optimizers.get_optimizer(optimizer)(model.parameters(), **kwargs)
-
-if __name__ == "__main__":
-    cfg = ModelConfigs("/home/gerardo/Desktop/Repos/ReadPapers/ImageClassification/_configs/alexnet.json")
-    cfg.get_hyperparams()

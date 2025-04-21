@@ -14,6 +14,7 @@ class Metrics:
 
 @dataclass
 class Parameters:
+    run_type: str
     epochs: int
     batch_size: int
     val_batch_size: int
