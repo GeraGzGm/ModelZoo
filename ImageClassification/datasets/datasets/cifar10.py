@@ -1,4 +1,5 @@
 from typing import Optional
+from enum import Enum, auto
 
 import torch
 import albumentations as A
@@ -10,15 +11,34 @@ from ..base_dataset import DatasetRegistry, BaseDataset, AlbumentationsWrapper
 
 torch.manual_seed(0)
 
-@DatasetRegistry.register("cifar10")
-class CIFAR10Dataset(BaseDataset):
-    N_CLASSES = 10
-    def __init__(self, root: str = "./data"):
-        self.root = root
+class Labels(Enum):
+    airplane = 0
+    automobile  = auto()
+    bird = auto()
+    cat = auto()
+    deer = auto()
+    dog = auto()
+    frog = auto()
+    horse = auto()
+    ship = auto()
+    truck = auto()
 
     @classmethod
-    def get_number_of_classes(cls) -> int:
-        return cls.N_CLASSES
+    def get_key(cls, value: int) -> str:
+        return cls(value).name
+
+@DatasetRegistry.register("cifar10")
+class CIFAR10Dataset(BaseDataset):
+    LABELS = Labels
+    NUM_WORKERS = 4
+    def __init__(self, train_batch_size: int, inference_batch_size: int, root: str = "./data"):
+        self.root = root
+        self.train_batch_size = train_batch_size
+        self.inference_batch_size = inference_batch_size
+
+    @classmethod
+    def get_classes(cls) -> Enum:
+        return cls.LABELS
     
     @classmethod
     def input_size(cls):
@@ -32,7 +52,7 @@ class CIFAR10Dataset(BaseDataset):
         train_dataset, val_dataset = self._split_train(dataset, split_ratio)
 
         test_dataset = AlbumentationsWrapper( datasets.CIFAR10(self.root, train = False, download = True), transform = test_transforms )
-        return train_dataset, val_dataset, test_dataset
+        return self._create_dataloaders(train_dataset, val_dataset, test_dataset)
     
     def convert_transforms(self, transforms: list[dict[str, str]]) -> A.Compose:
         """
@@ -52,7 +72,14 @@ class CIFAR10Dataset(BaseDataset):
                 transform["interpolation"] = Interpolations.to_cv2(interp)
 
             augmentations.append( getattr(A, type_)(**transform) )
-        return A.Compose(augmentations)
+        return A.Compose(augmentations + [A.ToTensorV2()])
 
     def _split_train(self, dataset: AlbumentationsWrapper, split_ratio: list[float]) -> tuple[AlbumentationsWrapper, AlbumentationsWrapper]:
         return random_split(dataset, split_ratio)
+    
+    def _create_dataloaders(self, trainset: AlbumentationsWrapper, valset : AlbumentationsWrapper, testset: AlbumentationsWrapper):
+        return (
+            DataLoader(trainset, batch_size = self.train_batch_size, shuffle = True, num_workers = self.NUM_WORKERS),
+            DataLoader(valset, batch_size = self.inference_batch_size, shuffle = True, num_workers = self.NUM_WORKERS),
+            DataLoader(testset, batch_size = self.inference_batch_size, shuffle = True, num_workers = self.NUM_WORKERS),
+        )

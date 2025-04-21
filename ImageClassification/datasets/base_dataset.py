@@ -1,7 +1,8 @@
+from enum import Enum
 from abc import ABC, abstractmethod
 
 import numpy as np
-import albumentations as A
+from torch import from_numpy, Tensor
 from torch.utils.data import Dataset, DataLoader
 
 class BaseDataset(ABC):
@@ -18,8 +19,8 @@ class BaseDataset(ABC):
         pass
 
     @abstractmethod
-    def get_number_of_classes(self) -> int:
-        """Return the number of classes. This will work for the FC layers output."""
+    def get_classes(self) -> Enum:
+        """Return the classes of the dataset."""
         pass
 
 class DatasetRegistry:
@@ -47,11 +48,12 @@ class AlbumentationsWrapper(Dataset):
     def __len__(self) -> int:
         return len(self.dataset)
         
-    def __getitem__(self, idx) -> tuple[np.ndarray, np.ndarray]:
+    def __getitem__(self, idx) -> tuple[np.ndarray, Tensor]:
         image, label = self.dataset[idx]
         image = np.array(image)
+        label = np.array(label)
         
         if self.transform:
             transformed = self.transform(image=image)
             image = transformed['image']
-        return image, label
+        return image, from_numpy(label)
