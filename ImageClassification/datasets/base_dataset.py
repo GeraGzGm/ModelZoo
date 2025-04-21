@@ -13,7 +13,7 @@ class BaseDataset(ABC):
         pass
 
     @abstractmethod
-    def get_datasets(self, transforms: dict[str, str]) -> tuple[Dataset, Dataset]:
+    def get_datasets(self, train_transforms: dict[str, str], test_transforms: dict[str, str]) -> tuple[Dataset, Dataset]:
         """Return (train_dataset, val_dataset)"""
         pass
 

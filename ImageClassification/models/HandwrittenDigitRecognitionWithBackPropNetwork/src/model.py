@@ -40,8 +40,9 @@ class LeNet1(nn.Module):
         return self.fc(h4_flat)
 
 
-# Sanity check with random data
-model = LeNet1()
-x = torch.randn(1, 1, 28, 28)  # Fake MNIST image
-output = model(x)
-print(output.shape)  # Should be torch.Size([1, 10])
+if __name__ == "__main__":
+    # Sanity check with random data
+    model = LeNet1()
+    x = torch.randn(1, 1, 28, 28)  # Fake MNIST image
+    output = model(x)
+    print(output.shape)  # Should be torch.Size([1, 10])

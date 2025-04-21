@@ -29,7 +29,6 @@ class Optimizers:
     adamax = Adamax
     rmsprop = RMSprop
 
-
     @classmethod
     def get_optimizer(cls, name: str) -> torch.optim.Optimizer:
         """Get optimizer class by name."""
