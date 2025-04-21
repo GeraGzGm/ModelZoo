@@ -49,7 +49,3 @@ class ModelConfigs:
 
     def _get_optimizer(self, optimizer: str, model: nn.Module, kwargs: dict) -> torch.optim.Optimizer:
         return Optimizers.get_optimizer(optimizer)(model.parameters(), **kwargs)
-
-if __name__ == "__main__":
-    cfg = ModelConfigs("/home/gerardo/Desktop/Repos/ReadPapers/ImageClassification/_configs/alexnet.json")
-    cfg.get_hyperparams()
