@@ -19,13 +19,13 @@ class Parameters:
     epochs: int
     batch_size: int
     val_batch_size: int
-    datasets: tuple[DataLoader, Optional[DataLoader], DataLoader]
-    labels: Enum
     model: nn.Module
     optimizer: torch.optim.Optimizer
     loss_function: nn.Module
+    labels: Enum
+    datasets: tuple[DataLoader, Optional[DataLoader], DataLoader]
     inferece_transforms: list
-    lr_decay: Optional[float]
+    lr_decay: Optional[float] = None
 
 @dataclass
 class Optimizers:

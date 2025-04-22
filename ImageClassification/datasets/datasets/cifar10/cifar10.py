@@ -6,26 +6,11 @@ import albumentations as A
 from torchvision import datasets
 from torch.utils.data import DataLoader, random_split
 
-from .utils import Interpolations
-from ..base_dataset import DatasetRegistry, BaseDataset, AlbumentationsWrapper
+from .labels import Labels
+from ..utils import Interpolations
+from ...base_dataset import DatasetRegistry, BaseDataset, AlbumentationsWrapper
 
 torch.manual_seed(0)
-
-class Labels(Enum):
-    airplane = 0
-    automobile  = auto()
-    bird = auto()
-    cat = auto()
-    deer = auto()
-    dog = auto()
-    frog = auto()
-    horse = auto()
-    ship = auto()
-    truck = auto()
-
-    @classmethod
-    def get_key(cls, value: int) -> str:
-        return cls(value).name
 
 @DatasetRegistry.register("cifar10")
 class CIFAR10Dataset(BaseDataset):

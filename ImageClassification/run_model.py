@@ -26,7 +26,6 @@ if __name__ == "__main__":
     model_path = args.model_path
 
     run = TrainModel(config, out_dir, model_path, "cuda")
-
     match run_type:
         case "train":
             run()

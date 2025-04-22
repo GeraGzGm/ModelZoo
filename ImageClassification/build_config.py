@@ -38,13 +38,13 @@ class ModelConfigs:
             epochs = self.config_file.get("epochs"),
             batch_size = self.config_file.get("batch_size"),
             val_batch_size = self.config_file.get("val_batch_size"),
-            labels = classes,
-            datasets = datasets,
             model = model,
             optimizer = optimizer,
             loss_function = loss_function,
-            lr_decay = self.config_file.get("lr_decay", None),
-            inferece_transforms = self.config_file.get("inference_transforms")
+            labels = classes,
+            datasets = datasets,
+            inferece_transforms = self.config_file.get("inference_transforms"),
+            lr_decay = self.config_file.get("lr_decay", None)
         )
 
     def _get_datasets(self, dataset_name: str,
@@ -57,10 +57,19 @@ class ModelConfigs:
         return dataset.get_datasets(train_transforms, inference_transforms, split_raio), dataset.get_classes()
     
     def _get_model(self, model_name: str, n_classes: int) -> nn.Module:
+        """
+        Retrieve model from the ModelsRegistry.
+        """
         return ModelsRegistry.get_model(model_name)(n_classes)
 
     def _get_optimizer(self, optimizer: str, model: nn.Module, kwargs: dict) -> torch.optim.Optimizer:
+        """
+        Retrieve optimizer from the Optimizers dataclass.
+        """
         return Optimizers.get_optimizer(optimizer)(model.parameters(), **kwargs)
 
     def _get_criterion(self, loss_function: str) -> nn.Module:
+        """
+        Retrieve loss function from the LossFunctions dataclass.
+        """
         return LossFunctions.get_criterion(loss_function)()

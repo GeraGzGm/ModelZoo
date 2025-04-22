@@ -1,5 +1,5 @@
-from enum import Enum
-from abc import ABC, abstractmethod
+from enum import Enum, EnumMeta, Flag, EnumType
+from abc import ABC, abstractmethod, ABCMeta
 
 import numpy as np
 from torch import from_numpy, Tensor
@@ -21,6 +21,24 @@ class BaseDataset(ABC):
     @abstractmethod
     def get_classes(self) -> Enum:
         """Return the classes of the dataset."""
+        pass
+
+class ABCEnumMeta(ABCMeta, EnumType):
+    pass
+
+class BaseLabels(ABC, Enum, metaclass = ABCEnumMeta):
+    """Abstract class for dataset-specific label enums."""
+
+    @classmethod
+    @abstractmethod
+    def get_key(cls, value: int) -> str:
+        """Returns the name of the label corresponding to the index."""
+        pass
+    
+    @classmethod
+    @abstractmethod
+    def __len__(self):
+        """Returns the number of labels."""
         pass
 
 class DatasetRegistry:

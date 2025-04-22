@@ -27,7 +27,8 @@ class TrainModel:
         self.valset = config.datasets[1]
         self.testset = config.datasets[2]
 
-        self.out_dir = out_dir        
+        self.out_dir = out_dir
+        self.model_path = model_path
         self._move_to_device()
 
     def _move_to_device(self) -> None:
@@ -40,7 +41,7 @@ class TrainModel:
             case "train":
                 self.train()
             case "inference":
-                results = self.eval(self.testset, load = True)
+                results = self.eval(self.testset, self.model_path)
                 Results.display_results(results, inference_transforms, classes)
             case _:
                 raise ValueError("Wrong mode type.")
@@ -54,6 +55,7 @@ class TrainModel:
             epoch_loss, epoch_accuracy = self._compute_avg_metrics(epoch_losses, epoch_accuracies)
 
             description = f"Epoch: {epoch}, Loss: {epoch_loss:0.4f}, Accuracy: {epoch_accuracy:0.4f}"
+
             accuracy, best_val_accuracy = self._eval_valset(epoch, best_val_accuracy)
 
             p_bar_train.set_description(description + accuracy)
@@ -92,6 +94,7 @@ class TrainModel:
 
     def _eval_valset(self, epoch: int, best_val_accuracy: float) -> str:
         description = f""
+
         if self.valset:
             val_output = self.eval(self.valset, False)
             _, val_accuracy = self._compute_avg_metrics([], [data[3] for data in val_output])
@@ -103,12 +106,12 @@ class TrainModel:
 
         return description, best_val_accuracy
 
-    def eval(self, testset: DataLoader, load: bool = False) -> tuple[list[Tensor, Tensor, float, float]]:
-        if load:
-            self.model.load_state_dict(torch.load(self.out_dir, weights_only=True))
+    def eval(self, testset: DataLoader, load_path: Optional[str] = None) -> list[tuple[Tensor, Tensor, float, float]]:
+        if load_path:
+            self.model.load_state_dict(torch.load(load_path, weights_only=True))
 
         self.model.eval()
-        results = []
+        predictions = []
 
         p_bar_eval = tqdm(testset, total = len(testset))
 
@@ -117,11 +120,10 @@ class TrainModel:
                 inputs, labels = inputs.to(self.device, non_blocking = True), labels.to(self.device, non_blocking = True)
 
                 output = self.model(inputs)
-                _, predicted = torch.max(output, 1)
 
                 accuracy = Metrics.Accuracy(labels, output)
-                results.append((inputs.cpu(), labels.cpu(), output.cpu(), accuracy))
-        return results
+                predictions.append((inputs.cpu(), labels.cpu(), output.cpu(), accuracy))
+        return predictions
 
     def _save_model(self, path: str) -> None:
         os.makedirs(os.path.dirname(path), exist_ok = True)
