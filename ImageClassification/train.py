@@ -6,6 +6,7 @@ from typing import Optional
 import matplotlib.pyplot as plt
 
 import torch
+import numpy as np
 from torch import Tensor
 from tqdm import tqdm
 from torch.utils.data import DataLoader, Dataset
@@ -14,7 +15,7 @@ from utils import Parameters, Metrics
 
 
 class TrainModel:
-    def __init__(self, config: Parameters, out_dir: str, device: str = "cuda"):
+    def __init__(self, config: Parameters, out_dir: Optional[str] = None, model_path: Optional[str] = None, device: str = "cuda"):
         self.device = device
         self.model = config.model
         self.optimizer = config.optimizer
@@ -34,13 +35,13 @@ class TrainModel:
             self.model.to(self.device)
             self.criterion.to(self.device)
     
-    def __call__(self, inferece_transforms: Optional[list], classes = Optional[list] , mode: str = "train"):
+    def __call__(self, inference_transforms: Optional[list] = None, classes: Optional[list] = None, mode: str = "train"):
         match mode:
             case "train":
                 self.train()
             case "inference":
                 results = self.eval(self.testset, load = True)
-                Results.display_results(results, inferece_transforms, classes)
+                Results.display_results(results, inference_transforms, classes)
             case _:
                 raise ValueError("Wrong mode type.")
 
@@ -120,15 +121,11 @@ class TrainModel:
 
                 accuracy = Metrics.Accuracy(labels, output)
                 results.append((inputs.cpu(), labels.cpu(), output.cpu(), accuracy))
-                p_bar_eval.update(1)
-                del inputs, labels, output, predicted
         return results
 
     def _save_model(self, path: str) -> None:
         os.makedirs(os.path.dirname(path), exist_ok = True)
         torch.save(self.model.state_dict(), path)
-
-
 
 class Results:
     def __init__(self):
@@ -152,12 +149,8 @@ class Results:
             y_pred = torch.argmax(pred_scores)
             pred_scores, preds_class = cls.get_classes(pred_scores, classes)
 
-            axes[i, 0].imshow(img)
-            axes[i, 0].axis("off")
-            axes[i, 0].set_title(f"{ classes.get_key(int(y_true)) } \n Pred: { classes.get_key(int(y_pred)) }")
-
-            axes[i, 1].barh(list(preds_class.keys())[:5], list(preds_class.values())[:5])
-            axes[i, 1].set_xlim(0, 1)
+            cls._plot_image(axes[i, 0], img, y_true, y_pred, classes)
+            cls._plot_bar(axes[i, 1], preds_class)
 
         plt.tight_layout()
         plt.show()
@@ -167,21 +160,21 @@ class Results:
         return sum(accuracy)/len(accuracy)
     
     @staticmethod
-    def denormalize_img(img: torch.Tensor, mean: torch.Tensor, std: torch.Tensor) -> torch.Tensor:
-        mean_tensor = torch.tensor(mean).view(3, 1, 1)
-        std_tensor = torch.tensor(std).view(3, 1, 1)
-        return mean_tensor + img * std_tensor
-
-    @staticmethod
     def create_subplots(nrows: int, figsize: tuple = (10,12)):
         return plt.subplots(nrows = nrows, ncols = 2, figsize = figsize)
-    
+
     @staticmethod
     def extract_mean_std(transforms: list[dict]) -> tuple[list, list]:
         for transform in transforms:
             if (mean := transform.get("mean", None)) and (std := transform.get("std", None)):
                 return mean, std
         return None, None
+
+    @staticmethod
+    def denormalize_img(img: torch.Tensor, mean: torch.Tensor, std: torch.Tensor) -> torch.Tensor:
+        mean_tensor = torch.tensor(mean).view(3, 1, 1)
+        std_tensor = torch.tensor(std).view(3, 1, 1)
+        return  (img * std_tensor) + mean_tensor
     
     @staticmethod
     def get_classes(scores: torch.Tensor, classes: Enum) -> tuple[torch.Tensor, dict]:
@@ -189,3 +182,15 @@ class Results:
         preds_class = {classes.get_key(pred): float(scores[pred]) for pred in range(len(scores))}
         preds_class = dict(sorted(preds_class.items(), key = lambda x: x[1], reverse = True))
         return scores, preds_class
+    
+    @staticmethod
+    def _plot_image(axes, img: np.ndarray, y_true, y_pred, classes) -> None:
+        axes.imshow(img)
+        axes.axis("off")
+        axes.set_title(f"{ classes.get_key(int(y_true)) } \n Pred: { classes.get_key(int(y_pred)) }")
+
+    @staticmethod
+    def _plot_bar(axes, preds_class) -> None:
+        axes.barh(list(preds_class.keys())[:5], list(preds_class.values())[:5])
+        axes.set_xlim(0, 1)
+

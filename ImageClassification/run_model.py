@@ -13,8 +13,8 @@ def create_argparse() -> argparse.Namespace:
     )
     parser.add_argument("--config_file", help = "Path where the model config file is.")
     parser.add_argument("--run_type", help = "Train or Inference")
-    parser.add_argument("--out_dir", help = "Directory were the checkpoints will be stored.", default = False)
-    parser.add_argument("--model_path", help = ".pth file path." , default = False)
+    parser.add_argument("--out_dir", help = "Directory were the checkpoints will be stored.", default = None)
+    parser.add_argument("--model_path", help = ".pth file path." , default = None)
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -25,12 +25,12 @@ if __name__ == "__main__":
     out_dir = args.out_dir
     model_path = args.model_path
 
+    run = TrainModel(config, out_dir, model_path, "cuda")
+
     match run_type:
         case "train":
-            run = TrainModel(config, out_dir, "cuda")
             run()
         case "inference":
-            run = TrainModel(config, model_path, "cuda")
-            run(mode = run_type, inferece_transforms = config.inferece_transforms, classes = config.labels)
+            run(mode = run_type, inference_transforms = config.inferece_transforms, classes = config.labels)
         case _:
             raise ValueError("Wrong run type")
