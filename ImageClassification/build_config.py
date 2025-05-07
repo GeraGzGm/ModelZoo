@@ -20,7 +20,7 @@ class ModelConfigs:
             with open(path, "r", encoding = "utf-8") as file:
                 return json.load(file)
         except FileNotFoundError as e:
-            assert e(f"Given path: {path} does not exist.")
+            raise FileNotFoundError(f"Given path: {path} does not exist.") from e
         
     def get_model_configs(self) -> Parameters:
         datasets, classes = self._get_datasets(self.config_file.get("dataset"),

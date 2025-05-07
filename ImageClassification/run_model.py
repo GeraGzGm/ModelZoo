@@ -3,7 +3,7 @@ import argparse
 import torch
 from torch import nn
 
-from train import TrainModel
+from train import Trainer
 from build_config import ModelConfigs
 
 
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     out_dir = args.out_dir
     model_path = args.model_path
 
-    run = TrainModel(config, out_dir, model_path, "cuda")
+    run = Trainer(config, out_dir, model_path, "cuda")
     match run_type:
         case "train":
             run()

@@ -29,6 +29,13 @@ class Parameters:
     scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None
 
 @dataclass
+class Output:
+    inputs: torch.Tensor
+    labels: torch.Tensor
+    outputs: torch.Tensor
+    accuracy: float
+
+@dataclass
 class Optimizers:
     sgd = SGD
     adam = Adam
