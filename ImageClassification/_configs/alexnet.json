@@ -1,6 +1,5 @@
 {
     "model": "AlexNet",
-    "run_type": "train",
     "dataset": "cifar10",
     "epochs": 30,
     "batch_size": 32,
