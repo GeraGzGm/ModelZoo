@@ -62,16 +62,15 @@ class Trainer:
     def train(self):
         best_val_accuracy = -inf
 
+        self._load_model(self.model_path)
+
         for epoch in range(self.config.epochs):
             loss, accuracy = self._train_epoch(self.trainset)
 
-            best_val_accuracy, val_loss = self._eval_valset(epoch, best_val_accuracy)            
+            best_val_accuracy, val_accuracy, val_loss = self._eval_valset(epoch, best_val_accuracy)            
             self.step_scheduler(val_loss)
 
-            self.board.add_scalar("Loss/Train", loss, epoch)
-            self.board.add_scalar("Accuracy/Train", accuracy, epoch)
-            self.board.add_scalar("Loss/Val", val_loss, epoch)
-            self.board.add_scalar("Accuracy/Val", best_val_accuracy, epoch)
+            self._tensorboard_log((loss, accuracy), (val_loss, val_accuracy), epoch)
 
         self._save_model(f"{self.out_dir}/last_epoch.pth")
     
@@ -106,11 +105,10 @@ class Trainer:
                 best_val_accuracy = val_accuracy
                 self._save_model(f"{self.out_dir}/{epoch}_{val_accuracy:0.4f}.pth")
 
-        return best_val_accuracy, val_loss
+        return best_val_accuracy, val_accuracy, val_loss
 
     def eval(self, testset: DataLoader, load_path: Optional[str] = None) -> list[tuple[Tensor, Tensor, float, float], float]:
-        if load_path:
-            self.model.load_state_dict(torch.load(load_path, weights_only=True))
+        self._load_model(load_path)
 
         self.model.eval()
         predictions = []
@@ -132,9 +130,24 @@ class Trainer:
         if self.scheduler:
             self.scheduler.step(val_loss)
 
+    def _tensorboard_log(self, train: tuple, val: tuple, epoch: int) -> None:
+        self.board.add_scalar("Loss/Train", train[0], epoch)
+        self.board.add_scalar("Accuracy/Train", train[1], epoch)
+        self.board.add_scalar("Loss/Val", val[0], epoch)
+        self.board.add_scalar("Accuracy/Val", val[1], epoch)
+
     def _save_model(self, path: str) -> None:
         os.makedirs(os.path.dirname(path), exist_ok = True)
         torch.save(self.model.state_dict(), path)
+
+    def _load_model(self, load_path: str | None):
+        
+        if load_path:
+            try:
+                state_dict = torch.load(load_path, map_location = self.device)
+                self.model.load_state_dict(state_dict)
+            except:
+                pass
 
 class Results:
 

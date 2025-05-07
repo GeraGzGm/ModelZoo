@@ -28,10 +28,4 @@ if __name__ == "__main__":
     model_path = args.model_path
 
     run = Trainer(config, out_dir, model_path, "cuda")
-    match run_type:
-        case "train":
-            run()
-        case "inference":
-            run(mode = run_type, inference_transforms = config.inferece_transforms, classes = config.labels)
-        case _:
-            raise ValueError("Wrong run type")
+    run(mode = run_type, inference_transforms = config.inferece_transforms, classes = config.labels)
