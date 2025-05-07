@@ -1,10 +1,9 @@
 {
     "model": "ResNet18",
-    "run_type": "train",
     "dataset": "cifar10",
     "epochs": 30,
-    "batch_size": 256,
-    "val_batch_size": 4,
+    "batch_size": 128,
+    "inference_batch_size": 8,
 
     "optimizer": "sgd",
     "optimizer_kwargs": { 
@@ -12,6 +11,14 @@
         "momentum": 0.9,
         "weight_decay": 5e-4
     },
+
+    "scheduler": "plateau",
+    "scheduler_kwargs": { 
+        "mode": "min",
+        "factor": 0.1,
+        "patience": 5
+    },
+
     "loss_function": "cross_entropy",
     "train_transforms": [
         {"type": "Resize", "p": 1, "height": 256, "width": 256, "interpolation": "INTER_LINEAR"},

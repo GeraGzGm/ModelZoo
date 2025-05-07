@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from utils import Parameters, Optimizers, LossFunctions
+from utils import Parameters, Optimizers, LossFunctions, Schedulers
 from models.base_models import ModelsRegistry
 from datasets.base_dataset import DatasetRegistry
 
@@ -33,6 +33,7 @@ class ModelConfigs:
         model = self._get_model(self.config_file.get("model"), len(classes))
         optimizer = self._get_optimizer( self.config_file.get("optimizer"), model, self.config_file.get("optimizer_kwargs") )
         loss_function = self._get_criterion( self.config_file.get("loss_function") )
+        scheduler = self._get_scheduler(optimizer, self.config_file.get("scheduler") , self.config_file.get("scheduler_kwargs")  )
 
         return Parameters(
             epochs = self.config_file.get("epochs"),
@@ -44,7 +45,7 @@ class ModelConfigs:
             labels = classes,
             datasets = datasets,
             inferece_transforms = self.config_file.get("inference_transforms"),
-            lr_decay = self.config_file.get("lr_decay", None)
+            scheduler = scheduler
         )
 
     def _get_datasets(self, dataset_name: str,
@@ -73,3 +74,11 @@ class ModelConfigs:
         Retrieve loss function from the LossFunctions dataclass.
         """
         return LossFunctions.get_criterion(loss_function)()
+    
+    def _get_scheduler(self, optim: torch.optim.Optimizer, scheduler: dict, scheduler_kwargs: dict) -> Optional[torch.optim.lr_scheduler.LRScheduler]:
+        """
+        Retrieve loss function from the LossFunctions dataclass.
+        """
+        if not scheduler:
+            return None
+        return Schedulers.get_scheduler(scheduler)(optim, **scheduler_kwargs)

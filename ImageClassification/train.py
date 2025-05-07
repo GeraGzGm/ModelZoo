@@ -20,13 +20,13 @@ class TrainModel:
         self.model = config.model
         self.optimizer = config.optimizer
         self.criterion = config.loss_function
+        self.scheduler = config.scheduler
 
         self.config = config
 
         self.trainset = config.datasets[0]
         self.valset = config.datasets[1]
         self.testset = config.datasets[2]
-
         self.out_dir = out_dir
         self.model_path = model_path
         self._move_to_device()
@@ -56,7 +56,9 @@ class TrainModel:
 
             description = f"Epoch: {epoch}, Loss: {epoch_loss:0.4f}, Accuracy: {epoch_accuracy:0.4f}"
 
-            accuracy, best_val_accuracy = self._eval_valset(epoch, best_val_accuracy)
+            accuracy, best_val_accuracy, val_loss = self._eval_valset(epoch, best_val_accuracy)            
+            self.step_scheduler(val_loss)
+
 
             p_bar_train.set_description(description + accuracy)
             p_bar_train.update(1)
@@ -92,11 +94,11 @@ class TrainModel:
         accuracy_avg = sum(accuracy)/len(accuracy) if accuracy else None
         return loss_avg, accuracy_avg
 
-    def _eval_valset(self, epoch: int, best_val_accuracy: float) -> str:
+    def _eval_valset(self, epoch: int, best_val_accuracy: float) -> tuple[str, float, float]:
         description = f""
 
         if self.valset:
-            val_output = self.eval(self.valset, False)
+            val_output, val_loss = self.eval(self.valset, False)
             _, val_accuracy = self._compute_avg_metrics([], [data[3] for data in val_output])
 
             description = f" Val_Accuracy: {val_accuracy: 0.4f}"
@@ -104,7 +106,7 @@ class TrainModel:
                 best_val_accuracy = val_accuracy
                 self._save_model(f"{self.out_dir}/{epoch}_{val_accuracy:0.4f}.pth")
 
-        return description, best_val_accuracy
+        return description, best_val_accuracy, val_loss
 
     def eval(self, testset: DataLoader, load_path: Optional[str] = None) -> list[tuple[Tensor, Tensor, float, float]]:
         if load_path:
@@ -112,6 +114,7 @@ class TrainModel:
 
         self.model.eval()
         predictions = []
+        val_losses = []
 
         p_bar_eval = tqdm(testset, total = len(testset))
 
@@ -120,14 +123,20 @@ class TrainModel:
                 inputs, labels = inputs.to(self.device, non_blocking = True), labels.to(self.device, non_blocking = True)
 
                 output = self.model(inputs)
+                loss = self.criterion(output, labels)
 
                 accuracy = Metrics.Accuracy(labels, output)
                 predictions.append((inputs.cpu(), labels.cpu(), output.cpu(), accuracy))
-        return predictions
+                val_losses.append(loss.cpu())
+        return predictions, np.mean(val_losses)
 
     def _save_model(self, path: str) -> None:
         os.makedirs(os.path.dirname(path), exist_ok = True)
         torch.save(self.model.state_dict(), path)
+
+    def step_scheduler(self, val_loss: float) -> None:
+        if self.scheduler:
+            self.scheduler.step(val_loss)
 
 class Results:
     def __init__(self):
@@ -180,7 +189,6 @@ class Results:
     
     @staticmethod
     def get_classes(scores: torch.Tensor, classes: Enum) -> tuple[torch.Tensor, dict]:
-        scores = torch.softmax(scores, 0)
         preds_class = {classes.get_key(pred): float(scores[pred]) for pred in range(len(scores))}
         preds_class = dict(sorted(preds_class.items(), key = lambda x: x[1], reverse = True))
         return scores, preds_class

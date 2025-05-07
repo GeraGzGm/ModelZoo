@@ -6,6 +6,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torch.optim import SGD, Adam, RMSprop, Adamax
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 class Metrics:
     @classmethod
@@ -25,7 +26,7 @@ class Parameters:
     labels: Enum
     datasets: tuple[DataLoader, Optional[DataLoader], DataLoader]
     inferece_transforms: list
-    lr_decay: Optional[float] = None
+    scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None
 
 @dataclass
 class Optimizers:
@@ -60,3 +61,18 @@ class LossFunctions:
                 f"Available Loss Function: {list(cls.__annotations__.keys())}"
             )
 
+
+@dataclass
+class Schedulers:
+    plateau = ReduceLROnPlateau
+
+    @classmethod
+    def get_scheduler(cls, name: str) -> torch.optim.lr_scheduler.LRScheduler:
+        """Get scheduler class by name."""
+        try:
+            return getattr(cls, name)
+        except AttributeError:
+            raise ValueError(
+                f"Unknown scheduler '{name}'. "
+                f"Available schedulers: {list(cls.__annotations__.keys())}"
+            )
