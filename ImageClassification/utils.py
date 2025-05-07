@@ -1,3 +1,5 @@
+from enum import Enum
+from typing import Optional
 from dataclasses import dataclass
 
 import torch
@@ -14,14 +16,16 @@ class Metrics:
 
 @dataclass
 class Parameters:
-    run_type: str
     epochs: int
     batch_size: int
     val_batch_size: int
-    datasets: tuple[DataLoader, DataLoader]
     model: nn.Module
     optimizer: torch.optim.Optimizer
     loss_function: nn.Module
+    labels: Enum
+    datasets: tuple[DataLoader, Optional[DataLoader], DataLoader]
+    inferece_transforms: list
+    lr_decay: Optional[float] = None
 
 @dataclass
 class Optimizers:
