@@ -53,4 +53,4 @@ class ModelConfigs:
         return Optimizers.get_optimizer(optimizer)(model.parameters(), **kwargs)
 
     def _get_criterion(self, loss_function: str) -> nn.Module:
-        return LossFunctions.get_criterion(loss_function)
+        return LossFunctions.get_criterion(loss_function)()

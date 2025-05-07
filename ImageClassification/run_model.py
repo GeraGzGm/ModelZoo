@@ -3,7 +3,9 @@ import argparse
 import torch
 from torch import nn
 
+from train import TrainModel
 from build_config import ModelConfigs
+
 
 
 def create_argparse() -> argparse.Namespace:
@@ -21,11 +23,10 @@ if __name__ == "__main__":
     config = ModelConfigs(args.config_file).get_model_configs()
     out_dir = args.out_dir
 
-    print(len(config.datasets[0]), len(config.datasets[1]), len(config.datasets[2]))
-
     match config.run_type.lower():
         case "train":
-            pass
+            train = TrainModel(config, out_dir)
+            train.train()
         case "inference":
             pass
         case _:
