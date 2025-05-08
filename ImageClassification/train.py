@@ -1,40 +1,53 @@
 import os
 import random
+import subprocess
 from math import inf
 from enum import Enum
 from typing import Optional
+
+
+import numpy as np
 import matplotlib.pyplot as plt
 
 import torch
-import numpy as np
+from torch import nn
 from torch import Tensor
 from tqdm import tqdm
 from torch.utils.data import DataLoader, Dataset
+from torch.utils.tensorboard import SummaryWriter
 
 from utils import Parameters, Metrics
 
 
-class TrainModel:
+class Trainer:
+    BOARD_PORT = "6006"
+
     def __init__(self, config: Parameters, out_dir: Optional[str] = None, model_path: Optional[str] = None, device: str = "cuda"):
         self.device = device
         self.model = config.model
         self.optimizer = config.optimizer
         self.criterion = config.loss_function
+        self.scheduler = config.scheduler
 
         self.config = config
 
         self.trainset = config.datasets[0]
         self.valset = config.datasets[1]
         self.testset = config.datasets[2]
-
         self.out_dir = out_dir
         self.model_path = model_path
+
+        self.board = SummaryWriter(out_dir + "logs/")
+        self._init_tensorboard(out_dir + "logs/")
         self._move_to_device()
 
     def _move_to_device(self) -> None:
         if torch.cuda.is_available() and self.device == "cuda":
             self.model.to(self.device)
             self.criterion.to(self.device)
+    
+    def _init_tensorboard(self, out_dir: str):
+        subprocess.Popen(["tensorboard", f"--logdir={out_dir}", "--port", self.BOARD_PORT])
     
     def __call__(self, inference_transforms: Optional[list] = None, classes: Optional[list] = None, mode: str = "train"):
         match mode:
@@ -46,29 +59,26 @@ class TrainModel:
             case _:
                 raise ValueError("Wrong mode type.")
 
-    def train(self) -> None:
+    def train(self):
         best_val_accuracy = -inf
-        p_bar_train = tqdm(range(self.config.epochs), total = self.config.epochs)
 
-        for epoch in p_bar_train:
-            epoch_losses, epoch_accuracies = self._train_epoch(self.trainset)
-            epoch_loss, epoch_accuracy = self._compute_avg_metrics(epoch_losses, epoch_accuracies)
+        self._load_model(self.model_path)
 
-            description = f"Epoch: {epoch}, Loss: {epoch_loss:0.4f}, Accuracy: {epoch_accuracy:0.4f}"
+        for epoch in range(self.config.epochs):
+            loss, accuracy = self._train_epoch(self.trainset)
 
-            accuracy, best_val_accuracy = self._eval_valset(epoch, best_val_accuracy)
+            best_val_accuracy, val_accuracy, val_loss = self._eval_valset(epoch, best_val_accuracy)            
+            self.step_scheduler(val_loss)
 
-            p_bar_train.set_description(description + accuracy)
-            p_bar_train.update(1)
-        p_bar_train.clear()
+            self._tensorboard_log((loss, accuracy), (val_loss, val_accuracy), epoch)
+
         self._save_model(f"{self.out_dir}/last_epoch.pth")
-
+    
     def _train_epoch(self, trainset: DataLoader) -> tuple[list, list]:
         losses = []
         accuracies = []
 
-        p_bar = tqdm(trainset, total = len(trainset))
-        for inputs, labels in p_bar:
+        for inputs, labels in trainset:
             inputs, labels = inputs.to(self.device, non_blocking = True), labels.to(self.device, non_blocking = True)
             self.optimizer.zero_grad()
 
@@ -79,59 +89,67 @@ class TrainModel:
             self.optimizer.step()
 
             accuracy = Metrics.Accuracy(labels, output)
+
             losses.append(loss.item())
             accuracies.append(accuracy)
+        return np.mean(losses), np.mean(accuracy)
 
-            p_bar.set_description(f"Loss: {loss:0.4f}, Accuracy: {accuracy:0.4f}")
-            p_bar.update(1)
-        return losses, accuracies
-
-    def _compute_avg_metrics(self, loss: list, accuracy: list) -> tuple[float, float]:
-        """Returns loss average and accuracy."""
-        loss_avg = sum(loss)/len(loss) if loss else None
-        accuracy_avg = sum(accuracy)/len(accuracy) if accuracy else None
-        return loss_avg, accuracy_avg
-
-    def _eval_valset(self, epoch: int, best_val_accuracy: float) -> str:
-        description = f""
+    def _eval_valset(self, epoch: int, best_val_accuracy: float) -> tuple[float, float]:
+        val_loss = 0.0
 
         if self.valset:
-            val_output = self.eval(self.valset, False)
-            _, val_accuracy = self._compute_avg_metrics([], [data[3] for data in val_output])
+            val_output, val_loss = self.eval(self.valset, False)
+            val_accuracy = np.mean([output[3] for output in val_output])
 
-            description = f" Val_Accuracy: {val_accuracy: 0.4f}"
             if val_accuracy >= best_val_accuracy:
                 best_val_accuracy = val_accuracy
                 self._save_model(f"{self.out_dir}/{epoch}_{val_accuracy:0.4f}.pth")
 
-        return description, best_val_accuracy
+        return best_val_accuracy, val_accuracy, val_loss
 
-    def eval(self, testset: DataLoader, load_path: Optional[str] = None) -> list[tuple[Tensor, Tensor, float, float]]:
-        if load_path:
-            self.model.load_state_dict(torch.load(load_path, weights_only=True))
+    def eval(self, testset: DataLoader, load_path: Optional[str] = None) -> list[tuple[Tensor, Tensor, float, float], float]:
+        self._load_model(load_path)
 
         self.model.eval()
         predictions = []
-
-        p_bar_eval = tqdm(testset, total = len(testset))
+        val_losses = []
 
         with torch.inference_mode():
-            for inputs, labels in p_bar_eval:
+            for inputs, labels in testset:
                 inputs, labels = inputs.to(self.device, non_blocking = True), labels.to(self.device, non_blocking = True)
 
                 output = self.model(inputs)
+                loss = self.criterion(output, labels)
 
                 accuracy = Metrics.Accuracy(labels, output)
                 predictions.append((inputs.cpu(), labels.cpu(), output.cpu(), accuracy))
-        return predictions
+                val_losses.append(loss.cpu())
+        return predictions, np.mean(val_losses)
+
+    def step_scheduler(self, val_loss: float) -> None:
+        if self.scheduler:
+            self.scheduler.step(val_loss)
+
+    def _tensorboard_log(self, train: tuple, val: tuple, epoch: int) -> None:
+        self.board.add_scalar("Loss/Train", train[0], epoch)
+        self.board.add_scalar("Accuracy/Train", train[1], epoch)
+        self.board.add_scalar("Loss/Val", val[0], epoch)
+        self.board.add_scalar("Accuracy/Val", val[1], epoch)
 
     def _save_model(self, path: str) -> None:
         os.makedirs(os.path.dirname(path), exist_ok = True)
         torch.save(self.model.state_dict(), path)
 
+    def _load_model(self, load_path: str | None):
+        
+        if load_path:
+            try:
+                state_dict = torch.load(load_path, map_location = self.device)
+                self.model.load_state_dict(state_dict)
+            except:
+                pass
+
 class Results:
-    def __init__(self):
-        pass
 
     @classmethod
     def display_results(cls, results: list, transforms: Optional[list], classes: Optional[Enum]):
@@ -180,7 +198,6 @@ class Results:
     
     @staticmethod
     def get_classes(scores: torch.Tensor, classes: Enum) -> tuple[torch.Tensor, dict]:
-        scores = torch.softmax(scores, 0)
         preds_class = {classes.get_key(pred): float(scores[pred]) for pred in range(len(scores))}
         preds_class = dict(sorted(preds_class.items(), key = lambda x: x[1], reverse = True))
         return scores, preds_class

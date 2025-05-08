@@ -3,8 +3,10 @@ import argparse
 import torch
 from torch import nn
 
+from train import Trainer
 from build_config import ModelConfigs
-from train import TrainModel
+
+
 
 def create_argparse() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -25,11 +27,5 @@ if __name__ == "__main__":
     out_dir = args.out_dir
     model_path = args.model_path
 
-    run = TrainModel(config, out_dir, model_path, "cuda")
-    match run_type:
-        case "train":
-            run()
-        case "inference":
-            run(mode = run_type, inference_transforms = config.inferece_transforms, classes = config.labels)
-        case _:
-            raise ValueError("Wrong run type")
+    run = Trainer(config, out_dir, model_path, "cuda")
+    run(mode = run_type, inference_transforms = config.inferece_transforms, classes = config.labels)
