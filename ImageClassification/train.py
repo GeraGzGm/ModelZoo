@@ -37,8 +37,6 @@ class Trainer:
         self.out_dir = out_dir
         self.model_path = model_path
 
-        self.board = SummaryWriter(out_dir + "logs/")
-        self._init_tensorboard(out_dir + "logs/")
         self._move_to_device()
 
     def _move_to_device(self) -> None:
@@ -52,6 +50,8 @@ class Trainer:
     def __call__(self, inference_transforms: Optional[list] = None, classes: Optional[list] = None, mode: str = "train"):
         match mode:
             case "train":
+                self.board = SummaryWriter(self.out_dir + "logs/")
+                self._init_tensorboard(self.out_dir + "logs/")
                 self.train()
             case "inference":
                 results = self.eval(self.testset, self.model_path)
@@ -64,13 +64,17 @@ class Trainer:
 
         self._load_model(self.model_path)
 
-        for epoch in range(self.config.epochs):
+        pbar = tqdm(range(self.config.epochs), total = self.config.epochs)
+
+        for epoch in pbar:
+            self.model.train()
             loss, accuracy = self._train_epoch(self.trainset)
 
             best_val_accuracy, val_accuracy, val_loss = self._eval_valset(epoch, best_val_accuracy)            
             self.step_scheduler(val_loss)
 
             self._tensorboard_log((loss, accuracy), (val_loss, val_accuracy), epoch)
+            pbar.set_description(f"Loss: {loss:5f}, Val_Loss: {val_loss:5f}, Acc: {accuracy:5f}, Val_Acc: {val_accuracy:5f}")
 
         self._save_model(f"{self.out_dir}/last_epoch.pth")
     
@@ -83,11 +87,12 @@ class Trainer:
             self.optimizer.zero_grad()
 
             output = self.model(inputs)
-            loss = self.criterion(output, labels)
+            loss = self.model.compute_loss(output, labels, self.criterion)
 
             loss.backward()
             self.optimizer.step()
 
+            output = self.model.get_main_output(output)
             accuracy = Metrics.Accuracy(labels, output)
 
             losses.append(loss.item())
@@ -153,7 +158,9 @@ class Results:
 
     @classmethod
     def display_results(cls, results: list, transforms: Optional[list], classes: Optional[Enum]):
+        results, _ = results
         accuracy = cls.compute_accuracy([result[3] for result in results])
+
         print(f"TestSet Accuracy: {accuracy}")
 
         batch = random.choice(results)
@@ -163,7 +170,7 @@ class Results:
         for i in range(len(batch)):
             img = cls.denormalize_img(batch[0][i], mean, std)
             y_true = batch[1][i]
-            pred_scores = batch[2][i]
+            pred_scores = torch.softmax(batch[2][i], dim = -1)
 
             img = (img.permute(1,2,0) * 255).type(torch.uint8)
             y_pred = torch.argmax(pred_scores)

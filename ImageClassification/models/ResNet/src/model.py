@@ -1,10 +1,10 @@
 import torch
 from torch import nn
 
-from ...base_models import ModelsRegistry
+from ...base_models import ModelsRegistry, BaseModel
 
 @ModelsRegistry.register("ResNet18")
-class ResNet18(nn.Module):
+class ResNet18(BaseModel):
     def __init__(self, n_classes: int):
         super().__init__()
 
