@@ -1,10 +1,12 @@
 import torch
 from torch import nn
 
-from ...base_models import ModelsRegistry
+from ...base_models import ModelsRegistry, BaseModel
 
 @ModelsRegistry.register("InceptionV1")
-class InceptionV1(nn.Module):
+class InceptionV1(BaseModel):
+    AUX_LOSS_DISCOUNT = 0.3
+
     def __init__(self, n_classes: int):
         super().__init__()
 
@@ -44,7 +46,7 @@ class InceptionV1(nn.Module):
             nn.MaxPool2d(kernel_size = 3, stride = 2, padding = 1),
         )
     
-    def forward(self, x: torch.Tensor) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> torch.Tensor | dict:
         x = self.cv1(x)
 
         x = self.inception_3a(x)
@@ -72,8 +74,25 @@ class InceptionV1(nn.Module):
         if not self.training:
             return x
         
-        return x, inception_4b_classifier, inception_4e_classifier
-    
+        return {
+            "main": x,
+            "aux1": inception_4b_classifier,
+            "aux2": inception_4e_classifier
+        }
+
+    def compute_loss(self, outputs: dict, targets: torch.Tensor, criterion: nn.Module) -> torch.Tensor:
+        """
+        During training, the auxiliary losses are added to the main loss with a discount weight (0.3).
+        """
+        loss_main = criterion(outputs["main"], targets)
+        loss_aux1 = criterion(outputs["aux1"], targets)
+        loss_aux2 = criterion(outputs["aux2"], targets)
+        return loss_main + (self.AUX_LOSS_DISCOUNT * loss_aux1) + (self.AUX_LOSS_DISCOUNT * loss_aux2)
+
+    def get_main_output(self, outputs: dict | torch.Tensor) -> torch.Tensor:
+        if isinstance(outputs, dict):
+            return outputs["main"]
+        return outputs
 
 class BaseConv2d(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int = 0):
