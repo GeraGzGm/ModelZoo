@@ -37,8 +37,6 @@ class Trainer:
         self.out_dir = out_dir
         self.model_path = model_path
 
-        self.board = SummaryWriter(out_dir + "logs/")
-        self._init_tensorboard(out_dir + "logs/")
         self._move_to_device()
 
     def _move_to_device(self) -> None:
@@ -52,6 +50,8 @@ class Trainer:
     def __call__(self, inference_transforms: Optional[list] = None, classes: Optional[list] = None, mode: str = "train"):
         match mode:
             case "train":
+                self.board = SummaryWriter(self.out_dir + "logs/")
+                self._init_tensorboard(self.out_dir + "logs/")
                 self.train()
             case "inference":
                 results = self.eval(self.testset, self.model_path)
@@ -158,7 +158,9 @@ class Results:
 
     @classmethod
     def display_results(cls, results: list, transforms: Optional[list], classes: Optional[Enum]):
+        results, _ = results
         accuracy = cls.compute_accuracy([result[3] for result in results])
+
         print(f"TestSet Accuracy: {accuracy}")
 
         batch = random.choice(results)
@@ -168,7 +170,7 @@ class Results:
         for i in range(len(batch)):
             img = cls.denormalize_img(batch[0][i], mean, std)
             y_true = batch[1][i]
-            pred_scores = batch[2][i]
+            pred_scores = torch.softmax(batch[2][i], dim = -1)
 
             img = (img.permute(1,2,0) * 255).type(torch.uint8)
             y_pred = torch.argmax(pred_scores)
