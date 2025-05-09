@@ -20,7 +20,7 @@ class InceptionV1(BaseModel):
         self.inception_4c = InceptionModule(512, 128, 128, 256, 24, 64, 64)     #[14,14,512]
         self.inception_4d = InceptionModule(512, 112, 144, 288, 32, 64, 64)     #[14,14,528]
         self.inception_4e = InceptionModule(528, 256, 160, 320, 32, 128, 128)   #[14,14,832]
-        self.inception_4e_classifier = AuxiliaryClassifier(832, n_classes)
+        self.inception_4e_classifier = AuxiliaryClassifier(528, n_classes)
 
         self.inception_5a = InceptionModule(832, 256, 160, 320, 32, 128, 128)   #[7,7,832]
         self.inception_5b = InceptionModule(832, 384, 192, 384, 48, 128, 128)   #[7,7,1024]
@@ -31,7 +31,7 @@ class InceptionV1(BaseModel):
             #nn.AvgPool2d(kernel_size = 7, stride = 1, padding = 0), #[1,1,1024]
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(1),
-            nn.Dropout(p = 0.4, inplace = True),
+            nn.Dropout(p = 0.4),
             nn.Linear(1024, n_classes)
         )
 
@@ -87,7 +87,7 @@ class InceptionV1(BaseModel):
         loss_main = criterion(outputs["main"], targets)
         loss_aux1 = criterion(outputs["aux1"], targets)
         loss_aux2 = criterion(outputs["aux2"], targets)
-        return loss_main + (self.AUX_LOSS_DISCOUNT * loss_aux1) + (self.AUX_LOSS_DISCOUNT * loss_aux2)
+        return loss_main + self.AUX_LOSS_DISCOUNT * (loss_aux1 + loss_aux2)
 
     def get_main_output(self, outputs: dict | torch.Tensor) -> torch.Tensor:
         if isinstance(outputs, dict):
@@ -148,12 +148,12 @@ class AuxiliaryClassifier(nn.Module):
         self.linear = nn.Sequential(
             nn.Linear(2048, 1024),
             nn.ReLU(inplace = True),
-            nn.Dropout(p = 0.7, inplace = True),
+            nn.Dropout(p = 0.7),
             nn.Linear(1024, n_classes)
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.avg_pool(x)
         x = self.conv(x)
-        x = torch.flatten(x, dims = 1)
+        x = torch.flatten(x, start_dim = 1)
         return self.linear(x)

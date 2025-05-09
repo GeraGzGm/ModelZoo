@@ -26,6 +26,6 @@ if __name__ == "__main__":
     run_type = args.run_type.lower()
     out_dir = args.out_dir
     model_path = args.model_path
-
+    
     run = Trainer(config, out_dir, model_path, "cuda")
     run(mode = run_type, inference_transforms = config.inferece_transforms, classes = config.labels)

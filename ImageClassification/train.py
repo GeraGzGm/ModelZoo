@@ -64,13 +64,17 @@ class Trainer:
 
         self._load_model(self.model_path)
 
-        for epoch in range(self.config.epochs):
+        pbar = tqdm(range(self.config.epochs), total = self.config.epochs)
+
+        for epoch in pbar:
+            self.model.train()
             loss, accuracy = self._train_epoch(self.trainset)
 
             best_val_accuracy, val_accuracy, val_loss = self._eval_valset(epoch, best_val_accuracy)            
             self.step_scheduler(val_loss)
 
             self._tensorboard_log((loss, accuracy), (val_loss, val_accuracy), epoch)
+            pbar.set_description(f"Loss: {loss:5f}, Val_Loss: {val_loss:5f}, Acc: {accuracy:5f}, Val_Acc: {val_accuracy:5f}")
 
         self._save_model(f"{self.out_dir}/last_epoch.pth")
     
@@ -83,11 +87,12 @@ class Trainer:
             self.optimizer.zero_grad()
 
             output = self.model(inputs)
-            loss = self.criterion(output, labels)
+            loss = self.model.compute_loss(output, labels, self.criterion)
 
             loss.backward()
             self.optimizer.step()
 
+            output = self.model.get_main_output(output)
             accuracy = Metrics.Accuracy(labels, output)
 
             losses.append(loss.item())
