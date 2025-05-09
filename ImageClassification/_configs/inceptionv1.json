@@ -11,6 +11,13 @@
         "momentum": 0.9,
         "weight_decay": 5e-4
     },
+
+    "scheduler": "per_epoch",
+    "scheduler_kwargs": { 
+        "step_size": 8,
+        "gamma": 0.04
+    },
+
     "loss_function": "cross_entropy",
     "train_transforms": [
         {"type": "Resize", "p": 1, "height": 256, "width": 256, "interpolation": "INTER_LINEAR"},
