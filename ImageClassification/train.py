@@ -16,7 +16,7 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
 
-from utils import Parameters, Metrics
+from .utils import Parameters, Metrics
 
 
 class Trainer:
