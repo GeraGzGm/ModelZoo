@@ -5,9 +5,13 @@
   - GoogLeNet (InceptionV1)
   - ResNet
   - VGG
+  - MobileNet-V1
 - **Configuration-Driven** via JSON files
 - **Extensible Design** for adding new models
 - **Reproducible Experiments** with checkpointing
+
+## Available datasets
+- Cifar-10 (cifar10)
 
 ## Quick Start
 
@@ -31,4 +35,6 @@ python ImageClassification/src/train.py \
 python ImageClassification/src/train.py \
   --run_type inference \
   --model_path ImageClassification/models/GoogLeNet/best.pth
+
+
 ```

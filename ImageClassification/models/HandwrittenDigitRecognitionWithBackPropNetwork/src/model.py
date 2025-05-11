@@ -7,7 +7,7 @@ from ...base_models import ModelsRegistry, BaseModel
 
 @ModelsRegistry.register("LeNet1")
 class LeNet1(BaseModel):
-    def __init__(self):
+    def __init__(self,  **kwargs):
         super().__init__()
 
         self.h1_w = nn.Parameter(randn(4, 24, 24, 1, 5, 5)) #4 maps, 24x24 , 1 input ch 5x5 weigths

@@ -11,7 +11,7 @@ class VGG16(BaseModel):
     - There's no spatial reduction in the intermediate layers (paddin = 1), until pooling layers (reducing by half).
     """
 
-    def __init__(self, n_classes: int):
+    def __init__(self, n_classes: int,  **kwargs):
         super().__init__()
         
         self.conv_layers = nn.Sequential(

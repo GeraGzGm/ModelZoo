@@ -1,3 +1,4 @@
+from math import floor
 
 import torch
 from torch import nn
@@ -6,31 +7,42 @@ from ...base_models import ModelsRegistry, BaseModel
 
 @ModelsRegistry.register("MobileNetv1")
 class MobileNetV1(BaseModel):
-    def __init__(self, n_classes: int):
+    """
+    Implementation of MobileNetV1.
+
+    Args:
+        n_classes (int): Number of classes for the output of the FC layer.
+        alpha (float): Width multiplier -> (0,1]
+        epsilon (float): Resolution multiplier -> (0,1]
+    """
+    def __init__(self, n_classes: int, **kwargs):
         super().__init__()
+
+        self.alpha = kwargs.get("alpha", 1)
+        #TODO: Implement epsilon ( but this must be done at the Dataset loader)
+        self.epsilon = kwargs.get("epsilon", 1)
         
         self.features = nn.Sequential(
-            ConvBlock(3, 32, 3, 2, 1),     #[112, 112, 32]
-            ConvDW(32, 64, 3, 1, 1),       #[112, 112, 64]
-            ConvDW(64, 128, 3, 2, 1),      #[56, 56, 128]
-            ConvDW(128, 128, 3, 1, 1),     #[56, 56, 128]
-            ConvDW(128, 256, 3, 2, 1),     #[28, 28, 256]
-            ConvDW(256, 256, 3, 1, 1),     #[28, 28, 256]
-            ConvDW(256, 512, 3, 2, 1),     #[14, 14, 512]
-            *[ConvDW(512, 512, 3, 1, 1) for _ in range(5)], #[14, 14, 512]
-            ConvDW(512, 1024, 3, 2, 1),     #[7, 7, 1024]
-            ConvDW(1024, 1024, 3, 1, 1),    #[7, 7, 1024]
+            ConvBlock(3, floor(32*self.alpha), 3, 2, 1),                       #[112, 112, 32]
+            ConvDW(floor(32*self.alpha), floor(64*self.alpha), 3, 1, 1),       #[112, 112, 64]
+            ConvDW(floor(64*self.alpha), floor(128*self.alpha), 3, 2, 1),      #[56, 56, 128]
+            ConvDW(floor(128*self.alpha), floor(128*self.alpha), 3, 1, 1),     #[56, 56, 128]
+            ConvDW(floor(128*self.alpha), floor(256*self.alpha), 3, 2, 1),     #[28, 28, 256]
+            ConvDW(floor(256*self.alpha), floor(256*self.alpha), 3, 1, 1),     #[28, 28, 256]
+            ConvDW(floor(256*self.alpha), floor(512*self.alpha), 3, 2, 1),     #[14, 14, 512]
+            *[ConvDW(floor(512*self.alpha), floor(512*self.alpha), 3, 1, 1) for _ in range(5)], #[14, 14, 512]
+            ConvDW(floor(512*self.alpha), floor(1024*self.alpha), 3, 2, 1),     #[7, 7, 1024]
+            ConvDW(floor(1024*self.alpha), floor(1024*self.alpha), 3, 1, 1),    #[7, 7, 1024]
         )
 
         self.fc = nn.Sequential(
             nn.AdaptiveAvgPool2d((1,1)),
             nn.Flatten(),
-            nn.Linear(1024, n_classes)
+            nn.Linear(floor(1024*self.alpha), n_classes)
         )
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.features(x)
-        return self.fc(x)
+        return self.fc( self.features(x) )
 
 
 class ConvBlock(nn.Module):

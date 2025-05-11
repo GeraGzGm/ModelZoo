@@ -14,7 +14,7 @@ class AlexNet(BaseModel):
                                                     stride
     """
 
-    def __init__(self, n_classes: int):
+    def __init__(self, n_classes: int, **kwargs):
         super().__init__()
 
         self.features = nn.Sequential(
