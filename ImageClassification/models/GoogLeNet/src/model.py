@@ -7,7 +7,7 @@ from ...base_models import ModelsRegistry, BaseModel
 class InceptionV1(BaseModel):
     AUX_LOSS_DISCOUNT = 0.3
 
-    def __init__(self, n_classes: int):
+    def __init__(self, n_classes: int, **kwargs):
         super().__init__()
 
         self.cv1 = self.block()

@@ -5,7 +5,7 @@ from ...base_models import ModelsRegistry, BaseModel
 
 @ModelsRegistry.register("ResNet18")
 class ResNet18(BaseModel):
-    def __init__(self, n_classes: int):
+    def __init__(self, n_classes: int, **kwargs):
         super().__init__()
 
         self.resnet_18 = self._convolutions()

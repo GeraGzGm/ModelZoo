@@ -161,10 +161,10 @@ class Results:
         results, _ = results
         accuracy = cls.compute_accuracy([result[3] for result in results])
 
-        print(f"TestSet Accuracy: {accuracy}")
-
         batch = random.choice(results)
-        _, axes = cls.create_subplots(nrows = len(batch))
+
+        fig, axes = cls.create_subplots(nrows = len(batch))
+        fig.suptitle(f"TestSet Accuracy: {accuracy:0.5f}")
 
         mean, std = cls.extract_mean_std(transforms)
         for i in range(len(batch)):
@@ -179,6 +179,7 @@ class Results:
             cls._plot_image(axes[i, 0], img, y_true, y_pred, classes)
             cls._plot_bar(axes[i, 1], preds_class)
 
+        
         plt.tight_layout()
         plt.show()
     

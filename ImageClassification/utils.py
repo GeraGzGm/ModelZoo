@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from torch.optim import SGD, Adam, RMSprop, Adamax
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
 
 class Metrics:
     @classmethod
@@ -72,6 +72,7 @@ class LossFunctions:
 @dataclass
 class Schedulers:
     plateau = ReduceLROnPlateau
+    per_epoch = StepLR
 
     @classmethod
     def get_scheduler(cls, name: str) -> torch.optim.lr_scheduler.LRScheduler:
