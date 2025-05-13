@@ -3,7 +3,7 @@ from math import floor
 import torch
 from torch import nn
 
-from ...base_models import ModelsRegistry, BaseModel
+from ....base_models import ModelsRegistry, BaseModel
 
 @ModelsRegistry.register("MobileNetv1")
 class MobileNetV1(BaseModel):

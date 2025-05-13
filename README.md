@@ -6,6 +6,7 @@
   - ResNet
   - VGG
   - MobileNet-V1
+  - MobileNet-V2
 - **Configuration-Driven** via JSON files
 ```json
 {
@@ -42,6 +43,14 @@
 
 ## Available datasets
 - Cifar-10 (cifar10)
+
+- Kaggle API:
+  - Go to your Kaggle account settings.
+  - In API, click "Create New Token".
+  - Place this file in ~/.kaggle/.
+  - In the model config json file add "Kaggle" to the dataset key.
+  - Run the training/inference.
+  - Input the dataset URL.
 
 ## Quick Start
 
