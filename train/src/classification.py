@@ -12,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from ..base_train import BaseTraining, TrainRegistry
 from ..inference import Results
-from ...utils import Metrics
+from utils import Metrics
 
 @TrainRegistry.register("Classification")
 class Classification(BaseTraining):

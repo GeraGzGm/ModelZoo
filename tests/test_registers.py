@@ -1,9 +1,9 @@
 import torch
 import pytest
 
-from ImageClassification.train.base_train import TrainRegistry, BaseTraining
-from ImageClassification.models.base_models import ModelsRegistry, BaseModel
-from ImageClassification.datasets.base_dataset import DatasetRegistry, BaseDataset
+from train.base_train import TrainRegistry, BaseTraining
+from models.base_models import ModelsRegistry, BaseModel
+from dataset_loaders.base_dataset import DatasetRegistry, BaseDataset
 
 class DummyTraining(BaseTraining):
     def train(self): pass

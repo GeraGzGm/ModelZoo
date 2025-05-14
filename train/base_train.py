@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 import torch
 from torch import nn
 
-from ..utils import Parameters
+from utils import Parameters
 
 class BaseTraining(ABC):
     """

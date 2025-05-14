@@ -3,7 +3,7 @@ import argparse
 import torch
 from torch import nn
 
-from ImageClassification.build_config import ModelConfigs
+from build_config import ModelConfigs
 
 def create_argparse() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
