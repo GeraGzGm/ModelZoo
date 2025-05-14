@@ -25,4 +25,7 @@ if __name__ == "__main__":
     model_path = args.model_path
     
     trainer = ModelConfigs.get_trainer(config.train_type)(config, out_dir, model_path)
-    trainer(run_type)
+    trainer(inference_transforms = config.inferece_transforms,
+            classes = config.labels,
+            mode = run_type)
+
