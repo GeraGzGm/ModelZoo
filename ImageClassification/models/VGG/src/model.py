@@ -37,7 +37,7 @@ class VGG16(BaseModel):
         x = torch.flatten(x, 1)
         return self.linear(x)
 
-@ModelsRegistry.register("VGG19")
+@ModelsRegistry.register("VGG19", "Classification")
 class VGG19(nn.Module):
     def __init__(self, n_classes: int):
         super().__init__()
