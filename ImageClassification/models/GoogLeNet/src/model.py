@@ -3,7 +3,7 @@ from torch import nn
 
 from ...base_models import ModelsRegistry, BaseModel
 
-@ModelsRegistry.register("InceptionV1")
+@ModelsRegistry.register("InceptionV1", "Classification")
 class InceptionV1(BaseModel):
     AUX_LOSS_DISCOUNT = 0.3
 

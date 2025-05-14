@@ -5,7 +5,7 @@ from torch import nn
 
 from ....base_models import ModelsRegistry, BaseModel
 
-@ModelsRegistry.register("MobileNetv1")
+@ModelsRegistry.register("MobileNetv1", "Classification")
 class MobileNetV1(BaseModel):
     """
     Implementation of MobileNetV1.

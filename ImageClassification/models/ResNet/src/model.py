@@ -3,7 +3,7 @@ from torch import nn
 
 from ...base_models import ModelsRegistry, BaseModel
 
-@ModelsRegistry.register("ResNet18")
+@ModelsRegistry.register("ResNet18", "Classification")
 class ResNet18(BaseModel):
     def __init__(self, n_classes: int, **kwargs):
         super().__init__()

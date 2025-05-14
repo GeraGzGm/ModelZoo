@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from ...base_models import ModelsRegistry, BaseModel
 
-@ModelsRegistry.register("AlexNet")
+@ModelsRegistry.register("AlexNet", "Classification")
 class AlexNet(BaseModel):
     """
     The original adaptation of AlexNet in Caffe had a padding of 0, do to that they were using an image size of

@@ -5,7 +5,7 @@ from torch.nn.functional import avg_pool2d
 
 from ...base_models import ModelsRegistry, BaseModel
 
-@ModelsRegistry.register("LeNet1")
+@ModelsRegistry.register("LeNet1", "Classification")
 class LeNet1(BaseModel):
     def __init__(self,  **kwargs):
         super().__init__()

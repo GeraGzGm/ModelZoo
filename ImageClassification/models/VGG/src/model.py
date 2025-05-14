@@ -3,7 +3,7 @@ from torch import nn
 
 from ...base_models import ModelsRegistry, BaseModel
 
-@ModelsRegistry.register("VGG16")
+@ModelsRegistry.register("VGG16", "Classification")
 class VGG16(BaseModel):
     """
     - BatchNorm was not used in the original VGG paper, but it helps to get a faster convergence. So, will be using that.
