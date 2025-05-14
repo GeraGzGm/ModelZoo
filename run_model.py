@@ -3,8 +3,7 @@ import argparse
 import torch
 from torch import nn
 
-from ImageClassification.train import Trainer
-from ImageClassification.build_config import ModelConfigs
+from build_config import ModelConfigs
 
 def create_argparse() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -25,5 +24,8 @@ if __name__ == "__main__":
     out_dir = args.out_dir
     model_path = args.model_path
     
-    run = Trainer(config, out_dir, model_path, "cuda")
-    run(mode = run_type, inference_transforms = config.inferece_transforms, classes = config.labels)
+    trainer = ModelConfigs.get_trainer(config.train_type)(config, out_dir, model_path)
+    trainer(inference_transforms = config.inferece_transforms,
+            classes = config.labels,
+            mode = run_type)
+
