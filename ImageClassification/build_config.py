@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Optional
+from typing import Optional, Type
 
 import torch
 from torch import nn
@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from .utils import Parameters, Optimizers, LossFunctions, Schedulers
 from .models.base_models import ModelsRegistry
 from .datasets.base_dataset import DatasetRegistry
+from .train.base_train import TrainRegistry, BaseTraining
 
 
 class ModelConfigs:
@@ -30,8 +31,9 @@ class ModelConfigs:
                                                  self.config_file.get("inference_batch_size"),
                                                  self.config_file.get("train_ratio"))
 
-        model_kwargs = self.config_file.get("model_kwargs", None)
-        model = self._get_model(self.config_file.get("model"), len(classes), model_kwargs)
+        model_kwargs = self.config_file.get("model_kwargs", {})
+        model, train_type = self._get_model(self.config_file.get("model"), len(classes), model_kwargs)
+
         optimizer = self._get_optimizer( self.config_file.get("optimizer"), model, self.config_file.get("optimizer_kwargs") )
         loss_function = self._get_criterion( self.config_file.get("loss_function") )
         scheduler = self._get_scheduler(optimizer, self.config_file.get("scheduler") , self.config_file.get("scheduler_kwargs")  )
@@ -46,7 +48,8 @@ class ModelConfigs:
             labels = classes,
             datasets = datasets,
             inferece_transforms = self.config_file.get("inference_transforms"),
-            scheduler = scheduler
+            scheduler = scheduler,
+            train_type = train_type
         )
 
     def _get_datasets(self, dataset_name: str,
@@ -58,11 +61,16 @@ class ModelConfigs:
         dataset = DatasetRegistry.get_dataset(dataset_name)(train_batch_size, inference_batch_size)
         return dataset.get_datasets(train_transforms, inference_transforms, split_raio), dataset.get_classes()
     
-    def _get_model(self, model_name: str, n_classes: int, model_kwargs: dict | None) -> nn.Module:
+    def _get_model(self, model_name: str, n_classes: int, model_kwargs: dict | None) -> tuple[nn.Module, str]:
         """
-        Retrieve model from the ModelsRegistry.
+        Retrieve model from the ModelsRegistry and the training type.
         """
-        return ModelsRegistry.get_model(model_name)(n_classes, **model_kwargs)
+        model, train_type = ModelsRegistry.get_model(model_name)
+        return model(n_classes, **model_kwargs), train_type
+
+    @staticmethod
+    def get_trainer(train_type: str) -> Type[BaseTraining]:
+        return TrainRegistry.get_model(train_type)
 
     def _get_optimizer(self, optimizer: str, model: nn.Module, kwargs: dict) -> torch.optim.Optimizer:
         """

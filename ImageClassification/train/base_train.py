@@ -1,4 +1,5 @@
 import os
+import subprocess
 from typing import Type, Optional
 from abc import ABC, abstractmethod
 
@@ -43,18 +44,13 @@ class BaseTraining(ABC):
             self.model.to(self.device)
             self.criterion.to(self.device)
 
-    @abstractmethod
-    def train(self):
-        pass
-    
-    @abstractmethod
-    def _train_epoch(self):
-        pass
+    def _init_tensorboard(self, out_dir: str):
+        subprocess.Popen(["tensorboard", f"--logdir={out_dir}", "--port", self.BOARD_PORT])
 
     def step_scheduler(self, val_loss: float) -> None:
         if self.scheduler:
             self.scheduler.step(val_loss)
-
+    
     def _save_model(self, path: str) -> None:
         os.makedirs(os.path.dirname(path), exist_ok = True)
         torch.save(self.model.state_dict(), path)
@@ -67,9 +63,20 @@ class BaseTraining(ABC):
             except TypeError as e:
                 raise "Error loading the model." from e
 
+    def __call__(self):
+        pass
 
+    @abstractmethod
+    def train(self):
+        pass
+    
+    @abstractmethod
+    def _train_epoch(self):
+        pass
 
-
+    @abstractmethod
+    def _tensorboard_log(self) -> None:
+        pass
 
 
 class TrainRegistry:
@@ -87,7 +94,7 @@ class TrainRegistry:
     @classmethod
     def register(cls, train_type: str):
         def decorator(train_class):            
-            cls._registry[train_type] = train_class
+            cls._registry[train_type.lower()] = train_class
             return train_class
         return decorator
     

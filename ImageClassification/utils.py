@@ -24,6 +24,7 @@ class Parameters:
     optimizer: torch.optim.Optimizer
     loss_function: nn.Module
     labels: Enum
+    train_type: str
     datasets: tuple[DataLoader, Optional[DataLoader], DataLoader]
     inferece_transforms: list
     scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None
