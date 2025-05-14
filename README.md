@@ -56,23 +56,23 @@
 
 ### 1. Installation
 ```bash
-git clone https://github.com/yourusername/readpapers.git
-cd readpapers
-pip install -r requirements.txt
+git clone https://github.com/geragzgm/modelzoo.git
+cd modelzoo
+pip install -e .
 ```
 
 ### 2. Training a Model
 ```bash
-python run_model.py \
+modelzoo \
   --run_type train \
   --config_file _configs/inceptionv1.json \
-  --out_dir ImageClassification/models/GoogLeNet/chkpt/
-  --model_path ImageClassification/models/GoogLeNet/chkpt/best.pth
+  --out_dir modelzoo/models/GoogLeNet/chkpt/
+  --model_path modelzoo/models/GoogLeNet/chkpt/best.pth
 ```
 
 ### 3. Evaluation
 ```bash
-python run_model.py \
+modelzoo \
   --run_type inference \
-  --model_path ImageClassification/models/GoogLeNet/best.pth
+  --model_path modelzoo/models/GoogLeNet/best.pth
 ```
