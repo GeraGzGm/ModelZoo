@@ -8,27 +8,28 @@ class ModelsRegistry:
     Global registry for DL Architectures.
     
     Usage:
-        @ModelsRegistry.register('resnet')
+        @ModelsRegistry.register("resnet", "classification",)
         class ResNet(nn.Module): ...
         
-        model = ModelsRegistry.get_model('resnet')
+        model, trainer = ModelsRegistry.get_model("resnet")
     """
     _registry = {}
     
     @classmethod
-    def register(cls, name: str):
-        def decorator(model_class):
-            cls._registry[name.lower()] = model_class
+    def register(cls, model_name: str, train_type: str):
+        model_name = model_name.lower()
+        train_type = train_type.lower()
+        def decorator(model_class):            
+            cls._registry[model_name] = (model_class, train_type)
             return model_class
         return decorator
     
     @classmethod
-    def get_model(cls, name: str) -> nn.Module:
+    def get_model(cls, model_name: str) -> tuple[nn.Module, str]:
         try:
-            return cls._registry[name.lower()]
+            return cls._registry[model_name.lower()]
         except KeyError:
-            raise ValueError(f"Unknown model {name}. Available models: {list(cls._registry.keys())}")
-        
+            raise ValueError(f"Unknown model {model_name}. Available models: {list(cls._registry.keys())}")
 
 
 class BaseModel(nn.Module):
