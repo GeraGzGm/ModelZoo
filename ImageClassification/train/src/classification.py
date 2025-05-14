@@ -11,6 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 from ..base_train import BaseTraining, TrainRegistry
+from ..inference import Results
 from ...utils import Metrics
 
 @TrainRegistry.register("Classification")
@@ -26,7 +27,7 @@ class Classification(BaseTraining):
                 self.train()
             case "inference":
                 results = self.eval(self.testset, self.model_path)
-                #Results.display_results(results, inference_transforms, classes)
+                Results.display_results(results, inference_transforms, classes)
             case _:
                 raise ValueError("Wrong mode type.")
 

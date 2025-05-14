@@ -78,7 +78,6 @@ class BaseTraining(ABC):
     def _tensorboard_log(self) -> None:
         pass
 
-
 class TrainRegistry:
     """
     Global registry for different kind of trainings.
