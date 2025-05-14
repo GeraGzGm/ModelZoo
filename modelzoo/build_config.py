@@ -6,10 +6,10 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from utils import Parameters, Optimizers, LossFunctions, Schedulers
-from models.base_models import ModelsRegistry
-from dataset_loaders.base_dataset import DatasetRegistry
-from train.base_train import TrainRegistry, BaseTraining
+from .utils import Parameters, Optimizers, LossFunctions, Schedulers
+from .models.base_models import ModelsRegistry
+from .dataset_loaders.base_dataset import DatasetRegistry
+from .train.base_train import TrainRegistry, BaseTraining
 
 
 class ModelConfigs:

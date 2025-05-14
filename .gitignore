@@ -4,6 +4,6 @@ __pycache__/
 *events.out*
 
 
-.pth
+*.pth
 datasets/
 */chkpt/
